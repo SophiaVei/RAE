@@ -4,7 +4,7 @@ import numpy as np
 import unicodedata
 
 # Define base directory
-base_dir = r"C:\Users\Sofia\PycharmProjects\RAE\data\permits"
+base_dir = r"\data\permits"
 
 # List of Excel files to process
 excel_files = [
