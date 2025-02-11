@@ -174,6 +174,7 @@ perifereia_coordinates = {
     "ΑΝΑΤΟΛΙΚΗΣ ΜΑΚΕΔΟΝΙΑΣ ΚΑΙ ΘΡΑΚΗΣ": (41.1230, 24.8820),
     "ΔΥΤΙΚΗΣ ΜΑΚΕΔΟΝΙΑΣ": (40.3000, 21.7889),
     "ΙΟΝΙΩΝ ΝΗΣΙΩΝ": (38.3087, 20.7072),
+    "ΚΡΗΤΗΣ": (35.2401, 24.8093)
 }
 
 # Add latitude and longitude columns based on ΠΕΡΙΦΕΡΕΙΑ
@@ -184,6 +185,20 @@ df_all["LON"] = df_all["ΠΕΡΙΦΕΡΕΙΑ"].map(lambda x: perifereia_coordina
 missing_coords = df_all[df_all["LAT"].isna()]
 if not missing_coords.empty:
     print("⚠️ Missing coordinates for the following regions:", missing_coords["ΠΕΡΙΦΕΡΕΙΑ"].unique())
+
+column_translations = {
+    "ΑΡΙΘΜΟΣ ΜΗΤΡΩΟΥ ΑΔΕΙΩΝ": "Permit ID",
+    "ΗΜΕΡΟΜΗΝΙΑ ΥΠΟΒΟΛΗΣ ΑΙΤΗΣΗΣ": "Application Submission Date",
+    "ΗΜΕΡΟΜΗΝΙΑ ΕΚΔ. ΑΔ.ΠΑΡΑΓΩΓΗΣ": "Permit Issuance Date",
+    "ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ ΑΔ.ΠΑΡΑΓΩΓΗΣ": "Permit Expiration Date",
+    "ΠΕΡΙΦΕΡΕΙΑ": "Region",
+    "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ": "Regional Unit",
+    "ΔΗΜΟΣ": "Municipality",
+    "ΜΕΓΙΣΤΗ ΙΣΧΥΣ (MW)": "Installed Capacity (MW)",
+    "ΤΕΧΝΟΛΟΓΙΑ": "Technology"
+}
+
+df_all.rename(columns=column_translations, inplace=True)
 
 
 # Save the cleaned dataset
