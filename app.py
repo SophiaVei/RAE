@@ -77,28 +77,41 @@ with tab1:
     st.subheader("⏳ Χρονοδιάγραμμα Λήξεων Αδειών")
     st.plotly_chart(plot_expiring_permits(df), use_container_width=True)
 
-# Map Visualization (ONLY the map on the second tab)
+# 🌍 **Optimized Map Visualization**
 with tab2:
     st.subheader("🌍 Χάρτης Αδειών ΑΠΕ")
 
+    # Only include regions that have valid LAT/LON coordinates
+    available_regions = df.dropna(subset=["LAT", "LON"])["ΠΕΡΙΦΕΡΕΙΑ"].unique()
+    available_regions = sorted(available_regions)  # Ensure sorted order
+
     selected_region_map = st.selectbox(
-        "Επιλέξτε Περιφέρεια", ["Όλες"] + sorted(df["ΠΕΡΙΦΕΡΕΙΑ"].unique()), key="region_map"
+        "Επιλέξτε Περιφέρεια", ["Όλες"] + available_regions, key="region_map_filter"
     )
+
     selected_technology_map = st.multiselect(
-        "Επιλέξτε Τεχνολογία",
-        sorted(df["ΤΕΧΝΟΛΟΓΙΑ"].unique()),
-        key="tech_map"
+        "Επιλέξτε Τεχνολογία", sorted(df["ΤΕΧΝΟΛΟΓΙΑ"].unique()), key="tech_map"
     )
 
-    df_filtered_map = df.copy()
-    if selected_region_map != "Όλες":
-        df_filtered_map = df_filtered_map[df_filtered_map["ΠΕΡΙΦΕΡΕΙΑ"] == selected_region_map]
+    @st.cache_data
+    def get_filtered_data(region, tech):
+        """Pre-filtered dataset to speed up map rendering."""
+        df_filtered = df.dropna(subset=["LAT", "LON"])
+        if region != "Όλες":
+            df_filtered = df_filtered[df_filtered["ΠΕΡΙΦΕΡΕΙΑ"] == region]
+        if tech:
+            df_filtered = df_filtered[df_filtered["ΤΕΧΝΟΛΟΓΙΑ"].isin(tech)]
+        return df_filtered
 
-    if selected_technology_map:
-        df_filtered_map = df_filtered_map[df_filtered_map["ΤΕΧΝΟΛΟΓΙΑ"].isin(selected_technology_map)]
+    # **Apply filters ONCE**
+    df_filtered_map = get_filtered_data(selected_region_map, selected_technology_map)
 
-    map_object = create_folium_map(df_filtered_map)
-    st_folium(map_object, width=900, height=700)
+    # **Only refresh the map when filters change, NOT when zooming**
+    if df_filtered_map.empty:
+        st.warning("Δεν υπάρχουν δεδομένα για τα επιλεγμένα φίλτρα.")
+    else:
+        map_object = create_folium_map(df_filtered_map)
+        st_folium(map_object, width=900, height=700, key="map")
 
 # Data Observations (ONLY the table on the third tab)
 with tab3:

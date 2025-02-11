@@ -3,6 +3,8 @@ import plotly.express as px
 import folium
 import geopandas as gpd
 from streamlit_folium import folium_static
+from folium.plugins import FastMarkerCluster
+
 
 
 def plot_permit_distribution(df):
@@ -34,20 +36,20 @@ def plot_installed_capacity(df):
     return fig
 
 
-def create_folium_map(df):
-    """Create an interactive Folium map of permits by region."""
-    greece_map = folium.Map(location=[38.0, 23.7], zoom_start=6)
 
-    # Aggregate permit count by region
-    permit_counts = df.groupby("ΠΕΡΙΦΕΡΕΙΑ").size().reset_index()
-    permit_counts.columns = ["Περιοχή", "Αριθμός Αδειών"]
+@st.cache_data
+def create_folium_map(df_filtered):
+    """Precompute the Folium map ONCE and store it to avoid unnecessary recalculations."""
 
-    for _, row in permit_counts.iterrows():
-        folium.Marker(
-            location=[38.0, 23.7],  # Dummy coordinates (Replace with actual)
-            popup=f"{row['Περιοχή']}: {row['Αριθμός Αδειών']} άδειες",
-            icon=folium.Icon(color="blue"),
-        ).add_to(greece_map)
+    greece_map = folium.Map(location=[38.0, 23.7], zoom_start=6, tiles="CartoDB positron")
+
+    if df_filtered.empty:
+        return greece_map  # Return an empty map if no data
+
+    # Use FastMarkerCluster for better performance
+    FastMarkerCluster(
+        data=df_filtered[["LAT", "LON"]].values.tolist()
+    ).add_to(greece_map)
 
     return greece_map
 
