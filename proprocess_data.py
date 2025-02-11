@@ -62,6 +62,12 @@ date_columns = ["ΗΜΕΡΟΜΗΝΙΑ ΥΠΟΒΟΛΗΣ ΑΙΤΗΣΗΣ", "ΗΜΕ�
 for col in date_columns:
     df_all[col] = pd.to_datetime(df_all[col], errors="coerce", dayfirst=True)
 
+# Fix incorrect expiration years (e.g., 1935 -> 2035, 1945 -> 2045, 1946 -> 2046)
+df_all["ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ ΑΔ.ΠΑΡΑΓΩΓΗΣ"] = df_all["ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ ΑΔ.ΠΑΡΑΓΩΓΗΣ"].apply(
+    lambda x: x.replace(year=x.year + 100) if x.year in [1935, 1945, 1946] else x
+)
+
+
 # Drop rows with invalid dates AFTER merging
 df_all = df_all.dropna(subset=date_columns)
 
