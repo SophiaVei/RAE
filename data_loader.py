@@ -3,7 +3,7 @@ import pandas as pd
 
 def load_data():
     """Load and preprocess the renewable energy permits dataset."""
-    file_path = r"\data\permits\final_permits_cleaned.xlsx"
+    file_path = r"data\permits\final_permits_cleaned.xlsx"
     df = pd.read_excel(file_path, dtype=str)
 
     # Convert date columns to datetime
