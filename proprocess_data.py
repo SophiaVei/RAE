@@ -76,8 +76,7 @@ df_all["ΜΕΓΙΣΤΗ ΙΣΧΥΣ (MW)"] = pd.to_numeric(df_all["ΜΕΓΙΣΤΗ 
 
 # Debug check for non-numeric values
 non_numeric_power = df_all[df_all["ΜΕΓΙΣΤΗ ΙΣΧΥΣ (MW)"].isna()]
-non_numeric_power.to_excel(os.path.join(base_dir, "debug_non_numeric_power.xlsx"), index=False)
-print(f"Saved non-numeric power rows to debug_non_numeric_power.xlsx ({len(non_numeric_power)} rows)")
+
 
 # Sort by ΑΡΙΘΜΟΣ ΜΗΤΡΩΟΥ ΑΔΕΙΩΝ (ascending) and ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ ΑΔ.ΠΑΡΑΓΩΓΗΣ (descending)
 df_all = df_all.sort_values(by=["ΑΡΙΘΜΟΣ ΜΗΤΡΩΟΥ ΑΔΕΙΩΝ", "ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ ΑΔ.ΠΑΡΑΓΩΓΗΣ"], ascending=[True, False])

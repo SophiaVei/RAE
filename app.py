@@ -14,6 +14,9 @@ from visualizations import (
 )
 from streamlit_folium import st_folium  # Use st_folium instead of folium_static
 
+# Set full-width layout
+st.set_page_config(page_title="Ενεργειακές Άδειες ΑΠΕ", layout="wide")
+
 # Load data
 df = load_data()
 
@@ -23,7 +26,7 @@ st.title("⚡️ Ενεργειακές Άδειες ΑΠΕ στην Ελλάδ�
 # Tabs for navigation
 tab1, tab2, tab3 = st.tabs(["📊 Ανάλυση Δεδομένων", "🌍 Χάρτης", "🔍 Παρατηρητήριο"])
 
-# Exploratory Data Analysis
+# Exploratory Data Analysis - ALL plots now on the first tab
 with tab1:
     st.subheader("📊 Κατανομή Αδειών")
 
@@ -37,13 +40,13 @@ with tab1:
     if selected_technology_dist:
         df_filtered_dist = df_filtered_dist[df_filtered_dist["ΤΕΧΝΟΛΟΓΙΑ"].isin(selected_technology_dist)]
 
-    st.plotly_chart(plot_permit_distribution(df_filtered_dist))
+    st.plotly_chart(plot_permit_distribution(df_filtered_dist), use_container_width=True)
 
     st.subheader("📈 Εξέλιξη Αδειών με την Πάροδο του Χρόνου")
-    st.plotly_chart(plot_permits_over_time(df))
+    st.plotly_chart(plot_permits_over_time(df), use_container_width=True)
 
     st.subheader("💡 Ανάπτυξη Τεχνολογιών ΑΠΕ")
-    st.plotly_chart(plot_technology_growth(df))
+    st.plotly_chart(plot_technology_growth(df), use_container_width=True)
 
     st.subheader("💡 Ισχύς ανά Τεχνολογία")
 
@@ -63,12 +66,18 @@ with tab1:
     if selected_technology_cap:
         df_filtered_cap = df_filtered_cap[df_filtered_cap["ΤΕΧΝΟΛΟΓΙΑ"].isin(selected_technology_cap)]
 
-    st.plotly_chart(plot_installed_capacity(df_filtered_cap))
+    st.plotly_chart(plot_installed_capacity(df_filtered_cap), use_container_width=True)
 
     st.subheader("🔝 Οι 10 Μεγαλύτερες Άδειες ΑΠΕ")
-    st.plotly_chart(plot_top_permits(df))
+    st.plotly_chart(plot_top_permits(df), use_container_width=True)
 
-# Map Visualization
+    st.subheader("🌞 Ενεργειακό Μείγμα Ανά Περιφέρεια")
+    st.plotly_chart(plot_energy_mix_per_region(df), use_container_width=True)
+
+    st.subheader("⏳ Χρονοδιάγραμμα Λήξεων Αδειών")
+    st.plotly_chart(plot_expiring_permits(df), use_container_width=True)
+
+# Map Visualization (ONLY the map on the second tab)
 with tab2:
     st.subheader("🌍 Χάρτης Αδειών ΑΠΕ")
 
@@ -89,16 +98,10 @@ with tab2:
         df_filtered_map = df_filtered_map[df_filtered_map["ΤΕΧΝΟΛΟΓΙΑ"].isin(selected_technology_map)]
 
     map_object = create_folium_map(df_filtered_map)
-    st_folium(map_object, width=700, height=700)
+    st_folium(map_object, width=900, height=700)
 
-    st.subheader("🌞 Ενεργειακό Μείγμα Ανά Περιφέρεια")
-    st.plotly_chart(plot_energy_mix_per_region(df))
-
-# Data Observations
+# Data Observations (ONLY the table on the third tab)
 with tab3:
-    st.subheader("⏳ Χρονοδιάγραμμα Λήξεων Αδειών")
-    st.plotly_chart(plot_expiring_permits(df))
-
     st.subheader("🔍 Πίνακας Δεδομένων")
 
     selected_region_table = st.selectbox(
@@ -117,4 +120,4 @@ with tab3:
     if selected_technology_table:
         df_filtered_table = df_filtered_table[df_filtered_table["ΤΕΧΝΟΛΟΓΙΑ"].isin(selected_technology_table)]
 
-    st.dataframe(df_filtered_table)
+    st.dataframe(df_filtered_table, use_container_width=True)
