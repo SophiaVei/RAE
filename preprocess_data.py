@@ -18,10 +18,12 @@ excel_files = [
 ]
 
 required_columns = [
-    "ΑΡΙΘΜΟΣ ΜΗΤΡΩΟΥ ΑΔΕΙΩΝ", "ΗΜΕΡΟΜΗΝΙΑ ΥΠΟΒΟΛΗΣ ΑΙΤΗΣΗΣ", "ΗΜΕΡΟΜΗΝΙΑ ΕΚΔ. ΑΔ.ΠΑΡΑΓΩΓΗΣ",
+    "ΕΤΑΙΡΕΙΑ", "ΑΡΙΘΜΟΣ ΜΗΤΡΩΟΥ ΑΔΕΙΩΝ", "ΗΜΕΡΟΜΗΝΙΑ ΥΠΟΒΟΛΗΣ ΑΙΤΗΣΗΣ", "ΗΜΕΡΟΜΗΝΙΑ ΕΚΔ. ΑΔ.ΠΑΡΑΓΩΓΗΣ",
     "ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ ΑΔ.ΠΑΡΑΓΩΓΗΣ", "ΠΕΡΙΦΕΡΕΙΑ", "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ", "ΔΗΜΟΣ",
     "ΜΕΓΙΣΤΗ ΙΣΧΥΣ (MW)", "ΤΕΧΝΟΛΟΓΙΑ"
 ]
+
+
 
 # Merging all files into a single DataFrame
 df_all = pd.DataFrame()
@@ -160,6 +162,40 @@ df_all["ΤΕΧΝΟΛΟΓΙΑ"] = df_all["ΤΕΧΝΟΛΟΓΙΑ"].str.strip().str.
 
 df_all["ΠΕΡΙΦΕΡΕΙΑ"] = df_all["ΠΕΡΙΦΕΡΕΙΑ"].replace(perifereia_map)
 
+regional_unit_map = {
+    "ΑΙΤΩΛΟΑΚΑΡΝΑΝΕΙΑΣ": "ΑΙΤΩΛΟΑΚΑΡΝΑΝΙΑΣ",
+    "ΑΙΤΩΛΟΑΚΑΡΝΑΝΙΑΣ ": "ΑΙΤΩΛΟΑΚΑΡΝΑΝΙΑΣ",
+    "ΘΕΣΠΩΤΙΑΣ": "ΘΕΣΠΡΩΤΙΑΣ",
+    "ΠΡΕΒΕΖΑΣ": "ΠΡΕΒΕΖΗΣ",
+    "ΛΑΡΙΣΑΣ": "ΛΑΡΙΣΗΣ",
+    "ΛΑΡΙΣΣΑΣ": "ΛΑΡΙΣΗΣ",
+    "ΜΑΓΝΗΣΙΑΣ": "ΜΑΓΝΗΣΙΑΣ",
+    "ΜΑΓΝΗΣΙΑΣ ": "ΜΑΓΝΗΣΙΑΣ",
+    "ΚΕΦ/ΝΙΑΣ": "ΚΕΦΑΛΛΗΝΙΑΣ",
+    "ΘΕΣ/ΝΙΚΗΣ": "ΘΕΣΣΑΛΟΝΙΚΗΣ",
+    "ΒΟΙΩΤΙΑ": "ΒΟΙΩΤΙΑΣ",
+    "ΦΘΙΩΤΙΔΑ": "ΦΘΙΩΤΙΔΑΣ",
+    "ΦΘΟΙΩΤΙΔΑΣ": "ΦΘΙΩΤΙΔΑΣ",
+    "ΦΩΚΙΔΑΣ": "ΦΩΚΙΔΟΣ"
+}
+
+df_all["ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ"] = df_all["ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ"].map(lambda x: regional_unit_map.get(x, x))
+
+# Apply corrections to the "Regional Unit" column
+# Normalize regional units before applying the mapping
+def normalize_regional_unit(text):
+    """Normalize text by stripping spaces, removing diacritics, and making uppercase."""
+    if isinstance(text, str):
+        text = text.strip()  # Remove leading/trailing spaces
+        text = unicodedata.normalize("NFKC", text)  # Normalize Unicode characters
+        text = text.replace("ΐ", "Ι").replace("ϊ", "Ι")  # Normalize diacritics
+        text = text.replace("Ϊ", "Ι")  # Handle uppercase variants
+        text = text.upper()  # Convert to uppercase
+    return text
+
+# Apply normalization BEFORE applying replacements
+df_all["ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ"] = df_all["ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ"].apply(normalize_regional_unit)
+
 # Mapping of ΠΕΡΙΦΕΡΕΙΑ to latitude and longitude
 perifereia_coordinates = {
     "ΑΤΤΙΚΗΣ": (37.9838, 23.7275),
@@ -181,12 +217,77 @@ perifereia_coordinates = {
 df_all["LAT"] = df_all["ΠΕΡΙΦΕΡΕΙΑ"].map(lambda x: perifereia_coordinates.get(x, np.nan)[0] if x in perifereia_coordinates else np.nan)
 df_all["LON"] = df_all["ΠΕΡΙΦΕΡΕΙΑ"].map(lambda x: perifereia_coordinates.get(x, np.nan)[1] if x in perifereia_coordinates else np.nan)
 
+# Mapping of Regional Units to latitude and longitude
+regional_unit_coordinates = {
+    "ΔΡΑΜΑΣ": (41.1528, 24.1476),
+    "ΕΒΡΟΥ": (40.8487, 25.8744),
+    "ΚΑΒΑΛΑΣ": (40.9396, 24.4065),
+    "ΞΑΝΘΗΣ": (41.1356, 24.8880),
+    "ΡΟΔΟΠΗΣ": (41.1224, 25.4066),
+    "ΝΗΣΩΝ": (37.3330, 23.5000),
+    "ΠΕΙΡΑΙΩΣ": (37.9420, 23.6462),
+    "ΛΕΣΒΟΥ": (39.1100, 26.5547),
+    "ΛΗΜΝΟΥ": (39.8789, 25.0587),
+    "ΣΑΜΟΥ": (37.7548, 26.9770),
+    "ΧΙΟΥ": (38.3680, 26.1358),
+    "ΑΙΤΩΛΟΑΚΑΡΝΑΝΙΑΣ": (38.6218, 21.4095),
+    "ΑΧΑΙΑΣ": (38.2466, 21.7346),
+    "ΗΛΕΙΑΣ": (37.6732, 21.4410),
+    "ΓΡΕΒΕΝΩΝ": (40.0833, 21.6667),
+    "ΚΑΣΤΟΡΙΑΣ": (40.5167, 21.2667),
+    "ΚΟΖΑΝΗΣ": (40.3000, 21.7889),
+    "ΦΛΩΡΙΝΑΣ": (40.7820, 21.4097),
+    "ΑΡΤΑΣ": (39.1600, 20.9854),
+    "ΘΕΣΠΡΩΤΙΑΣ": (39.5556, 20.0785),
+    "ΙΩΑΝΝΙΝΩΝ": (39.6650, 20.8537),
+    "ΠΡΕΒΕΖΗΣ": (38.9584, 20.7515),
+    "ΚΑΡΔΙΤΣΑΣ": (39.3655, 21.9216),
+    "ΛΑΡΙΣΑΣ": (39.6390, 22.4191),
+    "ΜΑΓΝΗΣΙΑΣ": (39.2950, 23.0367),
+    "ΤΡΙΚΑΛΩΝ": (39.5556, 21.7672),
+    "ΖΑΚΥΝΘΟΥ": (37.7916, 20.8956),
+    "ΚΕΦΑΛΛΗΝΙΑΣ": (38.2000, 20.5333),
+    "ΛΕΥΚΑΔΑΣ": (38.7167, 20.6417),
+    "ΗΜΑΘΙΑΣ": (40.6050, 22.1622),
+    "ΘΕΣΣΑΛΟΝΙΚΗΣ": (40.6401, 22.9444),
+    "ΚΙΛΚΙΣ": (40.9939, 22.8683),
+    "ΠΕΛΛΑΣ": (40.7636, 22.5244),
+    "ΠΙΕΡΙΑΣ": (40.2731, 22.5084),
+    "ΣΕΡΡΩΝ": (41.0850, 23.5480),
+    "ΧΑΛΚΙΔΙΚΗΣ": (40.3690, 23.2871),
+    "ΗΡΑΚΛΕΙΟΥ": (35.3387, 25.1442),
+    "ΛΑΣΙΘΙΟΥ": (35.0833, 25.9333),
+    "ΡΕΘΥΜΝΗΣ": (35.3656, 24.4823),
+    "ΧΑΝΙΩΝ": (35.5138, 24.0180),
+    "ΔΩΔΕΚΑΝΗΣΟΥ": (36.4345, 28.2224),
+    "ΚΑΛΥΜΝΟΥ": (36.9497, 26.9866),
+    "ΚΥΚΛΑΔΩΝ": (37.0841, 25.1509),
+    "ΚΩ": (36.8938, 27.2881),
+    "ΜΗΛΟΥ": (36.7333, 24.4333),
+    "ΡΟΔΟΥ": (36.4345, 28.2224),
+    "ΑΡΓΟΛΙΔΑΣ": (37.6000, 22.7333),
+    "ΑΡΚΑΔΙΑΣ": (37.5167, 22.3833),
+    "ΚΟΡΙΝΘΙΑΣ": (37.9404, 22.9321),
+    "ΛΑΚΩΝΙΑΣ": (36.9602, 22.5660),
+    "ΜΕΣΣΗΝΙΑΣ": (37.0674, 21.8404),
+    "ΒΟΙΩΤΙΑΣ": (38.3700, 23.1010),
+    "ΕΥΒΟΙΑΣ": (38.4590, 23.6012),
+    "ΕΥΡΥΤΑΝΙΑΣ": (39.0200, 21.6300),
+    "ΦΘΙΩΤΙΔΑΣ": (38.9000, 22.4333),
+    "ΦΩΚΙΔΟΣ": (38.4562, 22.4449)
+}
+
+# Add latitude and longitude columns based on Regional Units
+df_all["LAT_UNIT"] = df_all["ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ"].map(lambda x: regional_unit_coordinates.get(x, (np.nan, np.nan))[0])
+df_all["LON_UNIT"] = df_all["ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ"].map(lambda x: regional_unit_coordinates.get(x, (np.nan, np.nan))[1])
+
 # Debugging check
 missing_coords = df_all[df_all["LAT"].isna()]
 if not missing_coords.empty:
     print("⚠️ Missing coordinates for the following regions:", missing_coords["ΠΕΡΙΦΕΡΕΙΑ"].unique())
 
 column_translations = {
+    "ΕΤΑΙΡΕΙΑ": "Company",
     "ΑΡΙΘΜΟΣ ΜΗΤΡΩΟΥ ΑΔΕΙΩΝ": "Permit ID",
     "ΗΜΕΡΟΜΗΝΙΑ ΥΠΟΒΟΛΗΣ ΑΙΤΗΣΗΣ": "Application Submission Date",
     "ΗΜΕΡΟΜΗΝΙΑ ΕΚΔ. ΑΔ.ΠΑΡΑΓΩΓΗΣ": "Permit Issuance Date",
@@ -207,3 +308,4 @@ df_all.to_excel(final_output_file, index=False)
 
 print(f"Final number of unique permits: {len(df_all.index)}")
 print(f"Cleaned dataset saved to: {final_output_file}")
+

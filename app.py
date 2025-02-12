@@ -3,7 +3,7 @@ st.set_page_config(page_title="Renewable Energy Permits in Greece", layout="wide
 
 import pandas as pd
 from data_loader import load_data
-from greece_map import create_combined_map
+from greece_map import create_combined_map, create_prefecture_map
 from streamlit_folium import st_folium
 from visualizations import (
     plot_permit_distribution,
@@ -51,29 +51,17 @@ with tab1:
 with tab2:
     st.subheader("🌍 Map of Greece's Renewable Energy Permits")
 
-    # Generate the map
-    map_object = create_combined_map()
+    map_type = st.radio("Select Map Layer:", ["Regions", "Regional Units"])
 
-    # Display the map in full-screen
+    if map_type == "Regions":
+        st.subheader("🗺️ Regions of Greece")
+        map_object = create_combined_map()
+    else:
+        st.subheader("🏛️ Regional Units of Greece")
+        map_object = create_prefecture_map()
+
     st_folium(map_object, use_container_width=True, height=900, key="combined_map")
-    st.markdown("""
-        <style>
-            .main .block-container {
-                padding: 0rem !important;
-            }
-            .leaflet-control-attribution, 
-            .leaflet-bottom, 
-            .leaflet-control-layers, 
-            .leaflet-container a, 
-            .leaflet-bar {
-                display: none !important;
-                visibility: hidden !important;
-                opacity: 0 !important;
-                width: 0 !important;
-                height: 0 !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+
 
 # ✅ **Tab 3: Data Table**
 with tab3:
