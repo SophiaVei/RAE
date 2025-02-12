@@ -3,11 +3,18 @@ import plotly.express as px
 import folium
 from streamlit_folium import folium_static
 from folium.plugins import FastMarkerCluster
+import random
 
-import plotly.express as px
+technology_colors = {
+    "ΑΙΟΛΙΚΑ": "#d9ead3",  # Deep Blue
+    "ΒΙΟΜΑΖΑ": "#3B82F6",  # Lighter Blue
+    "ΜΥΗΕ": "#60A5FA",  # Sky Blue
+    "ΦΩΤΟΒΟΛΤΑΙΚΑ": "#ff2e79",  # Green
+    "ΒΙΟΜΑΖΑ-ΒΙΟΑΕΡΙΟ": "#A3E635",  # Light Green
+    "ΒΙΟΜΑΖΑ-ΚΑΥΣΗ": "#FACC15",  # Yellow
+    "ΗΛΙΟΘΕΡΜΙΚΑ": "#F97316",  # Orange
+}
 
-
-import plotly.express as px
 
 def plot_permit_distribution(df):
     """Bar chart of permits per region with limited company names on hover, preserving order."""
@@ -56,16 +63,23 @@ def plot_permit_distribution(df):
     return fig
 
 
-
 def plot_installed_capacity(df):
     """Pie chart of installed MW per technology."""
     capacity = df.groupby("Technology")["Installed Capacity (MW)"].sum().reset_index()
 
-    fig = px.pie(capacity, values="Installed Capacity (MW)", names="Technology",
-                 title="Installed Capacity (MW) by Technology")
+    fig = px.pie(
+        capacity,
+        values="Installed Capacity (MW)",
+        names="Technology",
+        title="💡 Installed Capacity (MW) by Technology",
+        color="Technology",
+        color_discrete_map=technology_colors  # ✅ Apply fixed colors
+    )
 
     fig.update_layout(width=600, height=600)  # Square aspect ratio
     return fig
+
+
 
 @st.cache_data
 def create_folium_map(df_filtered):
@@ -84,7 +98,6 @@ def create_folium_map(df_filtered):
 
 
 def plot_permits_over_time(df):
-    """Line chart of permits issued over time with a consistent modern color theme."""
 
     df["Year"] = df["Application Submission Date"].dt.year
     permits_per_year = df.groupby("Year").size().reset_index(name="Number of Permits")
@@ -107,7 +120,7 @@ def plot_permits_over_time(df):
         width=600, height=600,  # ✅ Square aspect ratio
         xaxis=dict(title="Year", tickangle=-45, tickfont=dict(size=14)),  # ✅ Slanted labels for readability
         yaxis=dict(title="Number of Permits", gridcolor="lightgray"),  # ✅ Grid for better visibility
-        title=dict(font=dict(size=18), x=0.5),  # ✅ Centered title
+        title=dict(font=dict(size=18)),  # ✅ Centered title
         plot_bgcolor="white",  # ✅ Clean background
         showlegend=False,  # ✅ Hide legend (since it's a single line)
     )
@@ -122,24 +135,46 @@ def plot_technology_growth(df):
     fig = px.area(
         tech_trends, x="Year", y="Installed Capacity (MW)", color="Technology",
         title="📊 Growth of Renewable Energy Technologies Over Time",
-        line_group="Technology"
+        line_group="Technology",
+        color_discrete_map=technology_colors  # ✅ Apply fixed colors
     )
 
     fig.update_layout(width=600, height=600)  # Square aspect ratio
     return fig
 
+
+
 def plot_top_permits(df):
-    """Bar chart of the top 10 largest permits."""
-    top_permits = df.nlargest(10, "Installed Capacity (MW)")
+    """Bar chart of the top 10 largest permits, colored by Technology with a legend."""
+
+    # Get the top 10 permits by installed capacity
+    top_permits = df.nlargest(10, "Installed Capacity (MW)").copy()
+
+    # Ensure Technology is treated as a category
+    top_permits["Technology"] = top_permits["Technology"].astype(str)
 
     fig = px.bar(
-        top_permits, x="Installed Capacity (MW)", y="Permit ID",
+        top_permits,
+        x="Installed Capacity (MW)",
+        y="Permit ID",
+        color="Technology",  # ✅ Color bars by Technology
+        color_discrete_map=technology_colors,  # ✅ Use fixed colors
         title="🔝 Top 10 Largest Renewable Energy Permits",
         orientation='h'
     )
 
-    fig.update_layout(width=600, height=600)  # Square aspect ratio
+    fig.update_layout(
+        width=600, height=600,  # ✅ Square aspect ratio
+        xaxis=dict(title="Installed Capacity (MW)", tickfont=dict(size=14)),
+        yaxis=dict(title="Permit ID", tickfont=dict(size=14)),
+        title=dict(font=dict(size=18)),  # ✅ Centered title
+        plot_bgcolor="white",  # ✅ Clean background
+        legend=dict(title="Technology", font=dict(size=12)),  # ✅ Add a legend box
+    )
+
     return fig
+
+
 
 def plot_energy_mix_per_region(df):
     """Sunburst chart of energy mix per region."""
@@ -154,32 +189,38 @@ def plot_energy_mix_per_region(df):
 
 
 def plot_expiring_permits(df):
-    """Histogram of expiring permits per year with a modern and consistent design."""
+    """Stacked bar chart of expiring permits per year, split by Technology."""
 
-    df["Year"] = df["Permit Expiration Date"].dt.year
-    expiration_counts = df["Year"].value_counts().reset_index()
-    expiration_counts.columns = ["Year", "Number of Permits"]
-    expiration_counts = expiration_counts.sort_values(by="Year")  # ✅ Ensure chronological order
+    # Ensure correct data types
+    df["Year"] = df["Permit Expiration Date"].dt.year.astype(int)  # Convert to int for sorting
+    df["Technology"] = df["Technology"].astype(str)  # Ensure Technology is string
 
+    # Aggregate the number of permits per year per Technology
+    expiration_counts = df.groupby(["Year", "Technology"]).size().reset_index(name="Number of Permits")
+
+    # ✅ Use a stacked bar chart to show expiration by Technology
     fig = px.bar(
         expiration_counts,
         x="Year",
         y="Number of Permits",
-        title="⏳ Expiring Renewable Energy Permits",
-        color_discrete_sequence=["#93C5FD"]  # ✅ Modern color consistency
+        color="Technology",  # ✅ Stack by Technology
+        title="⏳ Expiring Renewable Energy Permits (Stacked by Technology)",
+        barmode="stack",  # ✅ Stacked bars
+        color_discrete_map=technology_colors  # ✅ Use fixed colors
     )
 
     # ✅ Improve styling for a cleaner and more professional look
     fig.update_traces(
-        textposition="outside"  # ✅ Display numbers above bars
+        textposition="inside"  # ✅ Display numbers inside bars
     )
 
     fig.update_layout(
         xaxis=dict(title="Year", tickangle=-45, tickfont=dict(size=14)),  # ✅ Slanted labels for better readability
         yaxis=dict(title="Number of Permits", gridcolor="lightgray"),  # ✅ Subtle gridlines for better visibility
-        title=dict(font=dict(size=18), x=0.5),  # ✅ Center title
+        title=dict(font=dict(size=18)),  # ✅ Center title
         plot_bgcolor="white",  # ✅ Clean background
-        width=600, height=800  # ✅ Square aspect ratio
+        width=600, height=800,  # ✅ Square aspect ratio
+        legend=dict(title="Technology", font=dict(size=12))  # ✅ Add a legend box
     )
 
     return fig
