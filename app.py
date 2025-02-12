@@ -49,7 +49,7 @@ with tab1:
 
 # ✅ **Tab 2: Interactive Map**
 with tab2:
-    st.subheader("🌍 Combined Map of Greece & Permits")
+    st.subheader("🌍 Map of Greece's Renewable Energy Permits")
 
     # Generate the map
     map_object = create_combined_map()
