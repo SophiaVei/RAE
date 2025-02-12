@@ -17,19 +17,22 @@ technology_colors = {
 
 
 def plot_permit_distribution(df):
-    """Bar chart of permits per region with limited company names on hover, preserving order."""
+    """Stacked bar chart of permits per region, segmented by Technology, preserving original order with company names on hover."""
 
-    # Ensure "Company" is a string and handle NaN values
-    df["Company"] = df["Company"].fillna("Unknown").astype(str)
+    # Ensure correct data types
+    df["Technology"] = df["Technology"].astype(str)
+    df["Company"] = df["Company"].fillna("Unknown").astype(str)  # Ensure no NaNs in company names
 
-    # Count the number of permits per region (preserving the order)
-    permit_counts = df["Region"].value_counts().reset_index()
-    permit_counts.columns = ["Region", "Number of Permits"]
+    # **Step 1: Preserve Original Order of Regions**
+    region_order = df["Region"].value_counts().index.tolist()  # Get region order based on count
 
-    # Extract unique company names for each region (preserving the order)
+    # **Step 2: Aggregate Number of Permits per Region per Technology**
+    permit_counts = df.groupby(["Region", "Technology"]).size().reset_index(name="Number of Permits")
+
+    # **Step 3: Extract Unique Company Names for Each Region**
     company_info = df.groupby("Region")["Company"].unique().to_dict()
 
-    # Limit hover text to the first 10 companies, then add "... and X more"
+    # **Step 4: Format Company List for Hover**
     def format_company_list(companies):
         max_companies = 10  # ✅ Show only 10 companies
         if len(companies) > max_companies:
@@ -39,26 +42,37 @@ def plot_permit_distribution(df):
     permit_counts["Company"] = permit_counts["Region"].map(company_info)
     permit_counts["Company"] = permit_counts["Company"].apply(format_company_list)
 
+    # ✅ **Step 5: Stacked Bar Chart (Preserving Region Order)**
     fig = px.bar(
         permit_counts,
         x="Region",
         y="Number of Permits",
-        hover_data={"Company": True},  # ✅ Show company names on hover
-        color_discrete_sequence=["#8ccdc0"]  # ✅ Modern bar color
+        color="Technology",  # ✅ Stack by Technology
+        title="📊 Distribution of Renewable Energy Permits by Region (Segmented by Technology)",
+        barmode="stack",  # ✅ Stacked bars
+        color_discrete_map=technology_colors,  # ✅ Use fixed colors
+        hover_data={"Company": True}  # ✅ Show company names on hover
     )
 
+    # ✅ **Step 6: Apply Fixed Region Order**
+    fig.update_xaxes(categoryorder="array", categoryarray=region_order)  # ✅ Preserve original region order
+
+    # ✅ **Step 7: Improve Styling**
     fig.update_traces(
         hovertemplate="<b>%{x}</b><br>🔹 Companies:<br>%{customdata[0]}"  # ✅ Show limited companies only on hover
     )
 
     fig.update_layout(
         xaxis=dict(title="", tickangle=-45, tickfont=dict(size=14)),  # ✅ Slanted labels for readability
-        yaxis=dict(title="Number of Permits", gridcolor="lightgray"),  # ✅ Grid for better readability
+        yaxis=dict(title="Number of Permits", gridcolor="lightgray"),  # ✅ Subtle gridlines for better visibility
         plot_bgcolor="white",  # ✅ Clean background
-        width=600, height=800  # ✅ Square aspect ratio
+        width=600, height=800,  # ✅ Square aspect ratio
+        legend=dict(title="Technology", font=dict(size=12))  # ✅ Add a legend box
     )
 
     return fig
+
+
 
 
 def plot_installed_capacity(df):
