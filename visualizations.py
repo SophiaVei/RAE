@@ -44,7 +44,6 @@ def plot_permit_distribution(df):
         x="Region",
         y="Number of Permits",
         hover_data={"Company": True},  # ✅ Show company names on hover
-        title="📊 Distribution of Renewable Energy Permits by Region",
         color_discrete_sequence=["#8ccdc0"]  # ✅ Modern bar color
     )
 
@@ -53,9 +52,8 @@ def plot_permit_distribution(df):
     )
 
     fig.update_layout(
-        xaxis=dict(title="", tickangle=45, tickfont=dict(size=14)),  # ✅ Slanted labels for readability
+        xaxis=dict(title="", tickangle=-45, tickfont=dict(size=14)),  # ✅ Slanted labels for readability
         yaxis=dict(title="Number of Permits", gridcolor="lightgray"),  # ✅ Grid for better readability
-        title=dict(font=dict(size=18)),  # ✅ Centered title
         plot_bgcolor="white",  # ✅ Clean background
         width=600, height=800  # ✅ Square aspect ratio
     )
@@ -71,7 +69,6 @@ def plot_installed_capacity(df):
         capacity,
         values="Installed Capacity (MW)",
         names="Technology",
-        title="💡 Installed Capacity (MW) by Technology",
         color="Technology",
         color_discrete_map=technology_colors  # ✅ Apply fixed colors
     )
@@ -106,7 +103,6 @@ def plot_permits_over_time(df):
         permits_per_year,
         x="Year",
         y="Number of Permits",
-        title="📈 Trend of Renewable Energy Permits Over Time",
         markers=True
     )
 
@@ -120,7 +116,6 @@ def plot_permits_over_time(df):
         width=600, height=600,  # ✅ Square aspect ratio
         xaxis=dict(title="Year", tickangle=-45, tickfont=dict(size=14)),  # ✅ Slanted labels for readability
         yaxis=dict(title="Number of Permits", gridcolor="lightgray"),  # ✅ Grid for better visibility
-        title=dict(font=dict(size=18)),  # ✅ Centered title
         plot_bgcolor="white",  # ✅ Clean background
         showlegend=False,  # ✅ Hide legend (since it's a single line)
     )
@@ -134,7 +129,6 @@ def plot_technology_growth(df):
 
     fig = px.area(
         tech_trends, x="Year", y="Installed Capacity (MW)", color="Technology",
-        title="📊 Growth of Renewable Energy Technologies Over Time",
         line_group="Technology",
         color_discrete_map=technology_colors  # ✅ Apply fixed colors
     )
@@ -159,7 +153,6 @@ def plot_top_permits(df):
         y="Permit ID",
         color="Technology",  # ✅ Color bars by Technology
         color_discrete_map=technology_colors,  # ✅ Use fixed colors
-        title="🔝 Top 10 Largest Renewable Energy Permits",
         orientation='h'
     )
 
@@ -167,7 +160,6 @@ def plot_top_permits(df):
         width=600, height=600,  # ✅ Square aspect ratio
         xaxis=dict(title="Installed Capacity (MW)", tickfont=dict(size=14)),
         yaxis=dict(title="Permit ID", tickfont=dict(size=14)),
-        title=dict(font=dict(size=18)),  # ✅ Centered title
         plot_bgcolor="white",  # ✅ Clean background
         legend=dict(title="Technology", font=dict(size=12)),  # ✅ Add a legend box
     )
@@ -180,7 +172,6 @@ def plot_energy_mix_per_region(df):
     """Sunburst chart of energy mix per region."""
     fig = px.sunburst(
         df, path=["Region", "Technology"], values="Installed Capacity (MW)",
-        title="🌞 Energy Mix by Region and Technology"
     )
 
     fig.update_layout(width=600, height=600)  # Square aspect ratio
@@ -204,7 +195,6 @@ def plot_expiring_permits(df):
         x="Year",
         y="Number of Permits",
         color="Technology",  # ✅ Stack by Technology
-        title="⏳ Expiring Renewable Energy Permits (Stacked by Technology)",
         barmode="stack",  # ✅ Stacked bars
         color_discrete_map=technology_colors  # ✅ Use fixed colors
     )
@@ -217,7 +207,6 @@ def plot_expiring_permits(df):
     fig.update_layout(
         xaxis=dict(title="Year", tickangle=-45, tickfont=dict(size=14)),  # ✅ Slanted labels for better readability
         yaxis=dict(title="Number of Permits", gridcolor="lightgray"),  # ✅ Subtle gridlines for better visibility
-        title=dict(font=dict(size=18)),  # ✅ Center title
         plot_bgcolor="white",  # ✅ Clean background
         width=600, height=800,  # ✅ Square aspect ratio
         legend=dict(title="Technology", font=dict(size=12))  # ✅ Add a legend box
