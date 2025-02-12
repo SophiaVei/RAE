@@ -66,7 +66,7 @@ with tab3:
     st.subheader("🔍 Data Table")
 
     # ✅ Drop the "Year" column if it exists
-    df_display = df.drop(columns=["Year"], errors="ignore")
+    df_display = df.drop(columns=["Year", "LAT", "LON", "LAT_UNIT", "LON_UNIT"], errors="ignore")
 
     # ✅ Display the DataFrame without the "Year" column
     st.dataframe(df_display, use_container_width=True)
