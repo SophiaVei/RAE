@@ -48,7 +48,6 @@ def plot_permit_distribution(df):
         x="Region",
         y="Number of Permits",
         color="Technology",  # ✅ Stack by Technology
-        title="📊 Distribution of Renewable Energy Permits by Region (Segmented by Technology)",
         barmode="stack",  # ✅ Stacked bars
         color_discrete_map=technology_colors,  # ✅ Use fixed colors
         hover_data={"Company": True}  # ✅ Show company names on hover
