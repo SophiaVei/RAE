@@ -54,10 +54,8 @@ with tab2:
     map_type = st.radio("Select Map Layer:", ["Regions", "Regional Units"])
 
     if map_type == "Regions":
-        st.subheader("🗺️ Regions of Greece")
         map_object = create_combined_map()
     else:
-        st.subheader("🏛️ Regional Units of Greece")
         map_object = create_prefecture_map()
 
     st_folium(map_object, use_container_width=True, height=900, key="combined_map")
