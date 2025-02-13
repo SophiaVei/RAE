@@ -439,9 +439,6 @@ def plot_sankey_permits(df):
     ))
 
     fig.update_layout(
-        title=dict(
-            font=dict(size=18, family="Arial, sans-serif", color="black")
-        ),
         width=1400, height=900,
         font=dict(size=18, color="black"),  # ✅ This will style all text globally
     )
