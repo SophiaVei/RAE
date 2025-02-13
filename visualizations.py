@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.graph_objects as go
 import plotly.express as px
 import folium
 from streamlit_folium import folium_static
@@ -107,48 +108,163 @@ def create_folium_map(df_filtered):
     return greece_map
 
 
-def plot_permits_over_time(df):
+def plot_permits_over_time(df, fire_df, selected_fire_metric):
+    """Line chart of permits issued over time with dynamic selection for fire data."""
 
     df["Year"] = df["Application Submission Date"].dt.year
     permits_per_year = df.groupby("Year").size().reset_index(name="Number of Permits")
 
-    fig = px.line(
-        permits_per_year,
-        x="Year",
-        y="Number of Permits",
-        markers=True
+    fig = go.Figure()
+
+    # ✅ Primary Y-Axis: Number of Permits (Blue)
+    fig.add_trace(
+        go.Scatter(
+            x=permits_per_year["Year"],
+            y=permits_per_year["Number of Permits"],
+            mode="lines+markers",
+            name="Number of Permits",
+            line=dict(color="#93C5FD", width=2),
+            marker=dict(color="#8ccdc0", size=6),
+            yaxis="y1",
+        )
     )
 
-    # ✅ Apply consistent color styling (Line + Markers)
-    fig.update_traces(
-        line=dict(color="#93C5FD", width=2),  # ✅ Set line color & width
-        marker=dict(color="#8ccdc0", size=6)  # ✅ Set marker color & size
-    )
+    # ✅ Secondary Y-Axis: Number of Fires (Red)
+    if selected_fire_metric == "Number of Fires":
+        fig.add_trace(
+            go.Scatter(
+                x=fire_df["Year"],
+                y=fire_df["Number of Fires"],
+                mode="lines+markers",
+                name="Number of Fires",
+                line=dict(color="red", dash="dash"),
+                marker=dict(color="red", size=6),
+                yaxis="y2",
+            )
+        )
 
+    # ✅ Tertiary Y-Axis: Burned Area (Orange)
+    if selected_fire_metric == "Burned Area":
+        fig.add_trace(
+            go.Scatter(
+                x=fire_df["Year"],
+                y=fire_df["Burned Area (ha)"],
+                mode="lines+markers",
+                name="Burned Area (ha)",
+                line=dict(color="orange", dash="dot"),
+                marker=dict(color="orange", size=6),
+                yaxis="y3",
+            )
+        )
+
+    # ✅ Layout Adjustments
     fig.update_layout(
-        width=600, height=600,  # ✅ Square aspect ratio
-        xaxis=dict(title="Year", tickangle=-45, tickfont=dict(size=14)),  # ✅ Slanted labels for readability
-        yaxis=dict(title="Number of Permits", gridcolor="lightgray"),  # ✅ Grid for better visibility
-        plot_bgcolor="white",  # ✅ Clean background
-        showlegend=False,  # ✅ Hide legend (since it's a single line)
+        width=600, height=600,
+        xaxis=dict(title="Year", tickangle=-45, tickfont=dict(size=14)),
+        yaxis=dict(title="Number of Permits", gridcolor="lightgray"),  # Primary Y-Axis
+        yaxis2=dict(
+            title=dict(text="Number of Fires", font=dict(color="red")),  # ✅ Corrected title font setting
+            overlaying="y",
+            side="right",
+            showgrid=False,
+            tickfont=dict(color="red"),  # ✅ Red axis numbers
+        ),
+        yaxis3=dict(
+            title=dict(text="Burned Area (ha)", font=dict(color="orange")),  # ✅ Corrected title font setting
+            overlaying="y",
+            side="right",
+            showgrid=False,
+            tickfont=dict(color="orange"),  # ✅ Orange axis numbers
+            anchor="free",
+            position=1,
+        ),
+        plot_bgcolor="white",
+        showlegend=True,
+        legend=dict(x=1.1),  # ✅ Move legend box more to the right
     )
 
     return fig
 
-def plot_technology_growth(df):
-    """Stacked area chart showing technology trends over time."""
+
+def plot_technology_growth(df, fire_df, selected_fire_metric):
+    """Stacked area chart of technology trends over time with user-selected fire data."""
+
     df["Year"] = df["Application Submission Date"].dt.year
     tech_trends = df.groupby(["Year", "Technology"])["Installed Capacity (MW)"].sum().reset_index()
 
-    fig = px.area(
-        tech_trends, x="Year", y="Installed Capacity (MW)", color="Technology",
-        line_group="Technology",
-        color_discrete_map=technology_colors  # ✅ Apply fixed colors
+    fig = go.Figure()
+
+    # ✅ Primary Y-Axis: Installed Capacity (Blue)
+    for tech in tech_trends["Technology"].unique():
+        tech_data = tech_trends[tech_trends["Technology"] == tech]
+        fig.add_trace(
+            go.Scatter(
+                x=tech_data["Year"],
+                y=tech_data["Installed Capacity (MW)"],
+                mode="lines",
+                stackgroup="one",
+                name=tech,
+                line=dict(width=2),
+                fill="tonexty",
+                yaxis="y1",
+            )
+        )
+
+    # ✅ Secondary Y-Axis: Number of Fires (Red)
+    if selected_fire_metric == "Number of Fires":
+        fig.add_trace(
+            go.Scatter(
+                x=fire_df["Year"],
+                y=fire_df["Number of Fires"],
+                mode="lines+markers",
+                name="Number of Fires",
+                line=dict(color="red", dash="dash"),
+                marker=dict(color="red", size=6),
+                yaxis="y2",
+            )
+        )
+
+    # ✅ Tertiary Y-Axis: Burned Area (Orange)
+    if selected_fire_metric == "Burned Area":
+        fig.add_trace(
+            go.Scatter(
+                x=fire_df["Year"],
+                y=fire_df["Burned Area (ha)"],
+                mode="lines+markers",
+                name="Burned Area (ha)",
+                line=dict(color="orange", dash="dot"),
+                marker=dict(color="orange", size=6),
+                yaxis="y3",
+            )
+        )
+
+    # ✅ Layout Adjustments
+    fig.update_layout(
+        width=600, height=600,
+        xaxis=dict(title="Year", tickangle=-45, tickfont=dict(size=14)),
+        yaxis=dict(title="Installed Capacity (MW)", gridcolor="lightgray"),  # Primary Y-Axis
+        yaxis2=dict(
+            title=dict(text="Number of Fires", font=dict(color="red")),  # ✅ Corrected title font setting
+            overlaying="y",
+            side="right",
+            showgrid=False,
+            tickfont=dict(color="red"),  # ✅ Red axis numbers
+        ),
+        yaxis3=dict(
+            title=dict(text="Burned Area (ha)", font=dict(color="orange")),  # ✅ Corrected title font setting
+            overlaying="y",
+            side="right",
+            showgrid=False,
+            tickfont=dict(color="orange"),  # ✅ Orange axis numbers
+            anchor="free",
+            position=1,
+        ),
+        plot_bgcolor="white",
+        showlegend=True,
+        legend=dict(x=1.1),  # ✅ Move legend box more to the right
     )
 
-    fig.update_layout(width=600, height=600)  # Square aspect ratio
     return fig
-
 
 
 def plot_top_permits(df):

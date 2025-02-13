@@ -2,7 +2,7 @@ import streamlit as st  # ✅ Move st.set_page_config to the top before anything
 st.set_page_config(page_title="Renewable Energy Permits in Greece", layout="wide")  # ✅ Must be first!
 
 import pandas as pd
-from data_loader import load_data
+from data_loader import load_data, load_fire_data
 from greece_map import create_combined_map, create_prefecture_map
 from streamlit_folium import st_folium
 from visualizations import (
@@ -17,6 +17,8 @@ from visualizations import (
 
 # Load data
 df = load_data()
+fire_df = load_fire_data()
+
 
 # Dashboard Title
 st.title("⚡ Renewable Energy Permits in Greece")
@@ -30,12 +32,14 @@ with tab1:
     st.plotly_chart(plot_permit_distribution(df), use_container_width=True)
 
     st.subheader("📈 Permit Trends Over Time")
-    st.plotly_chart(plot_permits_over_time(df), use_container_width=True)
+    selected_fire_permits = st.radio("Select Fire Data to present in the Permits Chart", ["None", "Number of Fires", "Burned Area"])
+    st.plotly_chart(plot_permits_over_time(df, fire_df, selected_fire_permits), use_container_width=True)
 
     st.subheader("💡 Growth of Renewable Technologies")
-    st.plotly_chart(plot_technology_growth(df), use_container_width=True)
+    selected_fire_tech = st.radio("Select Fire Data to present in the Tech Growth Chart", ["None", "Number of Fires", "Burned Area"])
+    st.plotly_chart(plot_technology_growth(df, fire_df, selected_fire_tech), use_container_width=True)
 
-    st.subheader("💡 Installed Capacity by Technology")  # ✅ Re-added!
+    st.subheader("💡 Installed Capacity by Technology")
     st.plotly_chart(plot_installed_capacity(df), use_container_width=True)
 
     st.subheader("🔝 Top 10 Largest Permits")
@@ -70,4 +74,3 @@ with tab3:
 
     # ✅ Display the DataFrame without the "Year" column
     st.dataframe(df_display, use_container_width=True)
-
