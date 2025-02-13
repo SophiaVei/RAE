@@ -2,7 +2,6 @@ import pandas as pd
 import os
 import numpy as np
 import unicodedata
-from thefuzz import process
 
 # Define base directory
 base_dir = r"data\permits"
@@ -300,6 +299,20 @@ column_translations = {
 }
 
 df_all.rename(columns=column_translations, inplace=True)
+
+# Technology translation mapping
+technology_translation = {
+    "ΑΙΟΛΙΚΑ": "Wind Power",
+    "ΒΙΟΜΑΖΑ": "Biomass",
+    "ΜΥΗΕ": "Small Hydropower",
+    "ΦΩΤΟΒΟΛΤΑΙΚΑ": "Photovoltaics",
+    "ΒΙΟΜΑΖΑ-ΒΙΟΑΕΡΙΟ": "Biomass-Biogas",
+    "ΒΙΟΜΑΖΑ-ΚΑΥΣΗ": "Biomass-Combustion",
+    "ΗΛΙΟΘΕΡΜΙΚΑ": "Solar Thermal"
+}
+
+# Apply the translation
+df_all["Technology"] = df_all["Technology"].replace(technology_translation)
 
 
 # Save the cleaned dataset
