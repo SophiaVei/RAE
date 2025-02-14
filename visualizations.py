@@ -18,11 +18,10 @@ technology_colors = {
 
 
 def plot_permit_distribution(df):
-    """Stacked bar chart of permits per region, segmented by Technology, preserving original order with company names on hover."""
+    """Stacked bar chart of permits per region, segmented by Technology, preserving original order WITHOUT hover information."""
 
     # Ensure correct data types
     df["Technology"] = df["Technology"].astype(str)
-    df["Company"] = df["Company"].fillna("Unknown").astype(str)  # Ensure no NaNs in company names
 
     # **Step 1: Preserve Original Order of Regions**
     region_order = df["Region"].value_counts().index.tolist()  # Get region order based on count
@@ -30,36 +29,23 @@ def plot_permit_distribution(df):
     # **Step 2: Aggregate Number of Permits per Region per Technology**
     permit_counts = df.groupby(["Region", "Technology"]).size().reset_index(name="Number of Permits")
 
-    # **Step 3: Extract Unique Company Names for Each Region**
-    company_info = df.groupby("Region")["Company"].unique().to_dict()
-
-    # **Step 4: Format Company List for Hover**
-    def format_company_list(companies):
-        max_companies = 10  # ✅ Show only 10 companies
-        if len(companies) > max_companies:
-            return "<br>".join(companies[:max_companies]) + f"<br>... and {len(companies) - max_companies} more"
-        return "<br>".join(companies)
-
-    permit_counts["Company"] = permit_counts["Region"].map(company_info)
-    permit_counts["Company"] = permit_counts["Company"].apply(format_company_list)
-
-    # ✅ **Step 5: Stacked Bar Chart (Preserving Region Order)**
+    # ✅ **Step 3: Stacked Bar Chart (Preserving Region Order)**
     fig = px.bar(
         permit_counts,
         x="Region",
         y="Number of Permits",
         color="Technology",  # ✅ Stack by Technology
         barmode="stack",  # ✅ Stacked bars
-        color_discrete_map=technology_colors,  # ✅ Use fixed colors
-        hover_data={"Company": True}  # ✅ Show company names on hover
+        color_discrete_map=technology_colors  # ✅ Use fixed colors
     )
 
-    # ✅ **Step 6: Apply Fixed Region Order**
+    # ✅ **Step 4: Apply Fixed Region Order**
     fig.update_xaxes(categoryorder="array", categoryarray=region_order)  # ✅ Preserve original region order
 
-    # ✅ **Step 7: Improve Styling**
+    # ✅ **Step 5: Improve Styling**
     fig.update_traces(
-        hovertemplate="<b>%{x}</b><br>🔹 Companies:<br>%{customdata[0]}"  # ✅ Show limited companies only on hover
+        hoverinfo="none",  # ✅ Disable hovering
+        hovertemplate=None  # ✅ Ensure no tooltips appear
     )
 
     fig.update_layout(
@@ -71,6 +57,7 @@ def plot_permit_distribution(df):
     )
 
     return fig
+
 
 
 
@@ -262,11 +249,14 @@ def plot_technology_growth(df, fire_df, selected_fire_metric):
 def plot_top_permits(df):
     """Bar chart of the top 10 largest permits, colored by Technology with a legend."""
 
-    # Get the top 10 permits by installed capacity
+    # ✅ Get the top 10 permits by installed capacity
     top_permits = df.nlargest(10, "Installed Capacity (MW)").copy()
 
-    # Ensure Technology is treated as a category
+    # ✅ Ensure Technology is treated as a category
     top_permits["Technology"] = top_permits["Technology"].astype(str)
+
+    # ✅ Sort top permits so that the highest capacity is at the top
+    top_permits = top_permits.sort_values(by="Installed Capacity (MW)", ascending=True)
 
     fig = px.bar(
         top_permits,
@@ -274,7 +264,8 @@ def plot_top_permits(df):
         y="Permit ID",
         color="Technology",  # ✅ Color bars by Technology
         color_discrete_map=technology_colors,  # ✅ Use fixed colors
-        orientation='h'
+        orientation='h',
+        hover_data={"Company": True}  # ✅ Show Company when hovering
     )
 
     fig.update_layout(
@@ -336,24 +327,46 @@ def plot_expiring_permits(df):
     return fig
 
 def plot_cumulative_installed_capacity(df):
-    """Line chart showing the cumulative growth of installed capacity over time."""
+    """Line chart showing the cumulative growth of installed capacity over time, with separate lines per technology."""
+
     df["Year"] = df["Permit Issuance Date"].dt.year  # Extract year of permit issuance
+
+    # ✅ Calculate the cumulative sum for all installed capacity
     capacity_over_time = df.groupby("Year")["Installed Capacity (MW)"].sum().cumsum().reset_index()
+
+    # ✅ Calculate cumulative capacity for each technology separately
+    tech_capacity = df.groupby(["Year", "Technology"])["Installed Capacity (MW)"].sum().groupby(level=1).cumsum().reset_index()
 
     fig = go.Figure()
 
-    # ✅ Cumulative Installed Capacity
+    # ✅ Black Thick Line for Total Installed Capacity
     fig.add_trace(
         go.Scatter(
             x=capacity_over_time["Year"],
             y=capacity_over_time["Installed Capacity (MW)"],
             mode="lines+markers",
-            name="Cumulative Installed Capacity",
-            line=dict(color="#4CAF50", width=3),  # Green line
+            name="Total Installed Capacity",
+            line=dict(color="black", width=4),  # ✅ Black & Thick
             marker=dict(size=6),
         )
     )
 
+    # ✅ Lines for Each Technology (Using Predefined Colors)
+    for tech in df["Technology"].unique():
+        tech_data = tech_capacity[tech_capacity["Technology"] == tech]
+
+        fig.add_trace(
+            go.Scatter(
+                x=tech_data["Year"],
+                y=tech_data["Installed Capacity (MW)"],
+                mode="lines+markers",
+                name=tech,
+                line=dict(color=technology_colors.get(tech, "#999999"), width=2),  # ✅ Use predefined color
+                marker=dict(size=5),
+            )
+        )
+
+    # ✅ Layout Adjustments
     fig.update_layout(
         xaxis=dict(title="Year", tickangle=-45, tickfont=dict(size=14)),
         yaxis=dict(title="Cumulative Installed Capacity (MW)", gridcolor="lightgray"),
