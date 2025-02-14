@@ -424,7 +424,7 @@ def plot_sankey_permits(df):
     values = permit_counts["Number of Permits"]
 
     # Assign colors for technology nodes
-    node_colors = ["#DDDDDD"] * len(all_regions)  # Light gray for regions
+    node_colors = ["#FFFFFF"] * len(all_regions)  # Light gray for regions
     node_colors += [technology_colors.get(tech, "#999999") for tech in all_technologies]  # Use defined colors
 
     # ✅ Make links lighter by reducing opacity
@@ -439,7 +439,7 @@ def plot_sankey_permits(df):
             thickness=30,
             label=all_labels,
             color=node_colors,
-            line=dict(color="black", width=1),
+            line=dict(color="#FFFFFF", width=0),
             hovertemplate='<b>%{label}</b><extra></extra>',
 
         ),
