@@ -160,6 +160,9 @@ perifereia_map = {
 df_all["ΤΕΧΝΟΛΟΓΙΑ"] = df_all["ΤΕΧΝΟΛΟΓΙΑ"].str.strip().str.replace(r'\s*-\s*', '-', regex=True)
 
 df_all["ΠΕΡΙΦΕΡΕΙΑ"] = df_all["ΠΕΡΙΦΕΡΕΙΑ"].replace(perifereia_map)
+# Aggregate any regions that contain a comma (e.g., multiple regions in one field)
+df_all["ΠΕΡΙΦΕΡΕΙΑ"] = df_all["ΠΕΡΙΦΕΡΕΙΑ"].apply(lambda x: "ΑΛΛΕΣ" if "," in x else x)
+
 
 regional_unit_map = {
     "ΑΙΤΩΛΟΑΚΑΡΝΑΝΕΙΑΣ": "ΑΙΤΩΛΟΑΚΑΡΝΑΝΙΑΣ",
@@ -297,6 +300,28 @@ column_translations = {
     "ΜΕΓΙΣΤΗ ΙΣΧΥΣ (MW)": "Installed Capacity (MW)",
     "ΤΕΧΝΟΛΟΓΙΑ": "Technology"
 }
+
+# Apply translation to "ΠΕΡΙΦΕΡΕΙΑ" BEFORE renaming it
+perifereia_translation_map = {
+    "ΣΤΕΡΕΑΣ ΕΛΛΑΔΟΣ": "Central Greece",
+    "ΘΕΣΣΑΛΙΑΣ": "Thessaly",
+    "ΚΕΝΤΡΙΚΗΣ ΜΑΚΕΔΟΝΙΑΣ": "Central Macedonia",
+    "ΔΥΤΙΚΗΣ ΜΑΚΕΔΟΝΙΑΣ": "Western Macedonia",
+    "ΑΝΑΤΟΛΙΚΗΣ ΜΑΚΕΔΟΝΙΑΣ ΚΑΙ ΘΡΑΚΗΣ": "Eastern Macedonia and Thrace",
+    "ΔΥΤΙΚΗΣ ΕΛΛΑΔΟΣ": "Western Greece",
+    "ΠΕΛΟΠΟΝΝΗΣΟΥ": "Peloponnese",
+    "ΗΠΕΙΡΟΥ": "Epirus",
+    "ΑΤΤΙΚΗΣ": "Attica",
+    "ΝΟΤΙΟΥ ΑΙΓΑΙΟΥ": "South Aegean",
+    "ΚΡΗΤΗΣ": "Crete",
+    "ΑΛΛΕΣ": "Others",
+    "ΒΟΡΕΙΟΥ ΑΙΓΑΙΟΥ": "North Aegean",
+    "ΙΟΝΙΩΝ ΝΗΣΙΩΝ": "Ionian Islands",
+    "ΑΓΝΩΣΤΗ ΠΕΡΙΦΕΡΕΙΑ": "Unknown Region"
+}
+
+# Create a new column for the English translation
+df_all["ΠΕΡΙΦΕΡΕΙΑ"] = df_all["ΠΕΡΙΦΕΡΕΙΑ"].map(perifereia_translation_map)
 
 df_all.rename(columns=column_translations, inplace=True)
 
