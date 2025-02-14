@@ -497,13 +497,13 @@ def plot_violin_processing_time(df):
     # Filter out unreasonable values
     df = df[df["Processing Time (Days)"] > 0]
 
-    # ✅ Apply custom colors
+    # ✅ Apply custom colors and remove dots
     fig = px.violin(
         df,
         y="Processing Time (Days)",
         x="Technology",
-        box=True,
-        points="all",
+        box=True,  # ✅ Keep box for median & quartiles
+        points=False,  # ✅ Correct way to remove dots
         color="Technology",
         color_discrete_map=technology_colors,  # ✅ Apply fixed colors
     )
