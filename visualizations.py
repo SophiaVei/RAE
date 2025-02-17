@@ -5,6 +5,7 @@ import folium
 from streamlit_folium import folium_static
 from folium.plugins import FastMarkerCluster
 import random
+import pandas as pd
 
 technology_colors = {
     "Wind Power": "#d9ead3",  # Deep Blue
@@ -236,31 +237,35 @@ def plot_expiring_permits(df):
     return fig
 
 def plot_cumulative_installed_capacity(df):
-    """Line chart showing the cumulative growth of installed capacity over time, with separate lines per technology."""
+    """Line chart showing cumulative installed capacity over time, including total & per technology."""
 
-    df["Year"] = df["Permit Issuance Date"].dt.year  # Extract year of permit issuance
+    df["Year"] = df["Permit Issuance Date"].dt.year
 
-    # ✅ Calculate the cumulative sum for all installed capacity
-    capacity_over_time = df.groupby("Year")["Installed Capacity (MW)"].sum().cumsum().reset_index()
+    # ✅ Compute total cumulative installed capacity
+    total_capacity = df.groupby("Year")["Installed Capacity (MW)"].sum().cumsum().reset_index()
+    total_capacity["Technology"] = "Total"
 
-    # ✅ Calculate cumulative capacity for each technology separately
+    # ✅ Compute cumulative installed capacity per technology
     tech_capacity = df.groupby(["Year", "Technology"])["Installed Capacity (MW)"].sum().groupby(level=1).cumsum().reset_index()
+
+    # ✅ Merge total and per-technology capacity
+    combined_capacity = pd.concat([total_capacity, tech_capacity], ignore_index=True)
 
     fig = go.Figure()
 
-    # ✅ Black Thick Line for Total Installed Capacity
+    # ✅ Black thick line for total installed capacity
     fig.add_trace(
         go.Scatter(
-            x=capacity_over_time["Year"],
-            y=capacity_over_time["Installed Capacity (MW)"],
+            x=total_capacity["Year"],
+            y=total_capacity["Installed Capacity (MW)"],
             mode="lines+markers",
             name="Total Installed Capacity",
-            line=dict(color="black", width=4),  # ✅ Black & Thick
+            line=dict(color="black", width=4),  # Black & thick line
             marker=dict(size=6),
         )
     )
 
-    # ✅ Lines for Each Technology (Using Predefined Colors)
+    # ✅ Lines for each technology (using predefined colors)
     for tech in df["Technology"].unique():
         tech_data = tech_capacity[tech_capacity["Technology"] == tech]
 
@@ -270,12 +275,12 @@ def plot_cumulative_installed_capacity(df):
                 y=tech_data["Installed Capacity (MW)"],
                 mode="lines+markers",
                 name=tech,
-                line=dict(color=technology_colors.get(tech, "#999999"), width=2),  # ✅ Use predefined color
+                line=dict(color=technology_colors.get(tech, "#999999"), width=2),
                 marker=dict(size=5),
             )
         )
 
-    # ✅ Layout Adjustments
+    # ✅ Layout adjustments
     fig.update_layout(
         xaxis=dict(title="Year", tickangle=-45, tickfont=dict(size=14)),
         yaxis=dict(title="Cumulative Installed Capacity (MW)", gridcolor="lightgray"),
