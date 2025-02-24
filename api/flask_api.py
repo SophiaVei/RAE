@@ -12,44 +12,22 @@ app = Flask(__name__)
 CORS(app)
 
 
-app = Flask(__name__)
-
 # Load the dataset (processed permits data)
 df = load_data()
 
 
 @app.route("/")
 def home():
-    """Basic API Home Route"""
+    """
+    Home Route
+    ---
+    responses:
+      200:
+        description: Welcome message
+        examples:
+          application/json: { "message": "Renewable Energy Permits API" }
+    """
     return jsonify({"message": "Renewable Energy Permits API"})
-
-
-# ✅ GENERAL DATA ENDPOINTS (only fyi)
-@app.route("/permits", methods=["GET"])
-def get_permits():
-    """Returns all permits"""
-    return jsonify(df.to_dict(orient="records"))
-
-
-@app.route("/permit/<permit_id>", methods=["GET"])
-def get_permit(permit_id):
-    """Returns a specific permit by ID"""
-    permit = df[df["Permit ID"] == permit_id]
-    if permit.empty:
-        return jsonify({"error": "Permit not found"}), 404
-    return jsonify(permit.to_dict(orient="records")[0])
-
-
-@app.route("/permits/region/<region>", methods=["GET"])
-def get_permits_by_region(region):
-    """Returns permits for a specific region"""
-    filtered_df = df[df["Region"].str.lower() == region.lower()]
-    if filtered_df.empty:
-        return jsonify({"error": "No permits found in this region"}), 404
-    return jsonify(filtered_df.to_dict(orient="records"))
-
-
-
 
 
 
@@ -59,14 +37,68 @@ def get_permits_by_region(region):
 
 @app.route("/visualization/permit_distribution", methods=["GET"])
 def get_permit_distribution():
-    """Returns data for Permit Distribution visualization"""
+    """
+    Get Permit Distribution Data
+    ---
+    visualization_type: Stacked Bar Chart
+    description: Returns the distribution of permits across regions and technologies. Ideal for a stacked bar chart where each region's bar is segmented by technology.
+    responses:
+      200:
+        description: Data for permit distribution visualization
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Region:
+                type: string
+                example: "Attica"
+              Technology:
+                type: string
+                example: "Solar"
+              Number of Permits:
+                type: integer
+                example: 25
+        examples:
+          application/json: [
+            { "Region": "Attica", "Technology": "Solar", "Number of Permits": 25 },
+            { "Region": "Crete", "Technology": "Wind", "Number of Permits": 18 }
+          ]
+    """
+
     permit_counts = df.groupby(["Region", "Technology"]).size().reset_index(name="Number of Permits")
     return jsonify(permit_counts.to_dict(orient="records"))
 
 
+
 @app.route("/visualization/permits_over_time", methods=["GET"])
 def get_permits_over_time():
-    """Returns data for Permit Trends Over Time visualization"""
+    """
+    Get Permits Over Time
+    ---
+    visualization_type: Line Chart
+    description: Returns the total number of permits issued over time. Useful for visualizing temporal trends in permit issuance as a line chart.
+    responses:
+      200:
+        description: Number of permits issued over the years
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Year:
+                type: integer
+                example: 2020
+              Number of Permits:
+                type: integer
+                example: 45
+        examples:
+          application/json: [
+            { "Year": 2020, "Number of Permits": 45 },
+            { "Year": 2021, "Number of Permits": 58 }
+          ]
+    """
+
     df["Year"] = df["Application Submission Date"].dt.year
     permits_per_year = df.groupby("Year").size().reset_index(name="Number of Permits")
     return jsonify(permits_per_year.to_dict(orient="records"))
@@ -74,7 +106,34 @@ def get_permits_over_time():
 
 @app.route("/visualization/technology_growth", methods=["GET"])
 def get_technology_growth():
-    """Returns data for Growth of Renewable Technologies"""
+    """
+    Get Technology Growth Over Time
+    ---
+    visualization_type: Stacked Area Chart
+    description: Shows the growth of installed capacity (in MW) over time, broken down by renewable technology. Visualized as a stacked area chart.
+    responses:
+      200:
+        description: Growth of renewable technologies over time
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Year:
+                type: integer
+                example: 2021
+              Technology:
+                type: string
+                example: "Wind"
+              Installed Capacity (MW):
+                type: number
+                example: 150.5
+        examples:
+          application/json: [
+            { "Year": 2020, "Technology": "Solar", "Installed Capacity (MW)": 120.3 },
+            { "Year": 2020, "Technology": "Wind", "Installed Capacity (MW)": 150.5 }
+          ]
+    """
     df["Year"] = df["Application Submission Date"].dt.year
     tech_trends = df.groupby(["Year", "Technology"])["Installed Capacity (MW)"].sum().reset_index()
     return jsonify(tech_trends.to_dict(orient="records"))
@@ -82,28 +141,136 @@ def get_technology_growth():
 
 @app.route("/visualization/installed_capacity", methods=["GET"])
 def get_installed_capacity():
-    """Returns data for Installed Capacity by Technology"""
+    """
+    Get Installed Capacity by Technology
+    ---
+    visualization_type: Pie Chart
+    description: Provides the total installed capacity (in MW) for each technology. Suitable for a pie chart showing the proportion of each technology.
+    responses:
+      200:
+        description: Installed capacity per technology
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Technology:
+                type: string
+                example: "Solar"
+              Installed Capacity (MW):
+                type: number
+                example: 450.7
+        examples:
+          application/json: [
+            { "Technology": "Solar", "Installed Capacity (MW)": 450.7 },
+            { "Technology": "Wind", "Installed Capacity (MW)": 380.2 }
+          ]
+    """
     capacity = df.groupby("Technology")["Installed Capacity (MW)"].sum().reset_index()
     return jsonify(capacity.to_dict(orient="records"))
 
 
 @app.route("/visualization/top_permits", methods=["GET"])
 def get_top_permits():
-    """Returns data for Top 10 Largest Permits"""
+    """
+    Get Top 10 Largest Permits
+    ---
+    visualization_type: Horizontal Bar Chart
+    description: Returns the top 10 largest permits based on installed capacity. Perfect for a horizontal bar chart.
+    responses:
+      200:
+        description: Top 10 permits by installed capacity
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Permit ID:
+                type: string
+                example: "PERMIT12345"
+              Company:
+                type: string
+                example: "Green Energy Inc."
+              Installed Capacity (MW):
+                type: number
+                example: 300.5
+              Technology:
+                type: string
+                example: "Wind"
+        examples:
+          application/json: [
+            { "Permit ID": "PERMIT12345", "Company": "Green Energy Inc.", "Installed Capacity (MW)": 300.5, "Technology": "Wind" },
+            { "Permit ID": "PERMIT67890", "Company": "Solar Solutions", "Installed Capacity (MW)": 280.3, "Technology": "Solar" }
+          ]
+    """
     top_permits = df.nlargest(10, "Installed Capacity (MW)")[["Permit ID", "Company", "Installed Capacity (MW)", "Technology"]]
     return jsonify(top_permits.to_dict(orient="records"))
 
 
 @app.route("/visualization/energy_mix", methods=["GET"])
 def get_energy_mix():
-    """Returns data for Energy Mix by Region"""
+    """
+    Get Energy Mix by Region
+    ---
+    visualization_type: Sunburst Chart
+    description: Shows the energy mix breakdown by region and technology. Suitable for a sunburst chart or treemap.
+    responses:
+      200:
+        description: Energy mix breakdown by region and technology
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Region:
+                type: string
+                example: "Crete"
+              Technology:
+                type: string
+                example: "Solar"
+              Installed Capacity (MW):
+                type: number
+                example: 250.0
+        examples:
+          application/json: [
+            { "Region": "Crete", "Technology": "Solar", "Installed Capacity (MW)": 250.0 },
+            { "Region": "Attica", "Technology": "Wind", "Installed Capacity (MW)": 400.5 }
+          ]
+    """
     energy_mix = df.groupby(["Region", "Technology"])["Installed Capacity (MW)"].sum().reset_index()
     return jsonify(energy_mix.to_dict(orient="records"))
 
 
 @app.route("/visualization/expiring_permits", methods=["GET"])
 def get_expiring_permits():
-    """Returns data for Expiring Permits Timeline"""
+    """
+    Get Expiring Permits Timeline
+    ---
+    visualization_type: Stacked Bar Chart
+    description: Displays the number of permits expiring over time, broken down by technology. Ideal for a stacked bar chart.
+    responses:
+      200:
+        description: Number of permits expiring over time
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Year:
+                type: integer
+                example: 2025
+              Technology:
+                type: string
+                example: "Biomass"
+              Number of Permits:
+                type: integer
+                example: 15
+        examples:
+          application/json: [
+            { "Year": 2025, "Technology": "Biomass", "Number of Permits": 15 },
+            { "Year": 2026, "Technology": "Solar", "Number of Permits": 20 }
+          ]
+    """
     df["Year"] = df["Permit Expiration Date"].dt.year
     expiration_counts = df.groupby(["Year", "Technology"]).size().reset_index(name="Number of Permits")
     return jsonify(expiration_counts.to_dict(orient="records"))
@@ -111,25 +278,72 @@ def get_expiring_permits():
 
 @app.route("/visualization/cumulative_installed_capacity", methods=["GET"])
 def get_cumulative_installed_capacity():
-    """Returns data for Cumulative Installed Capacity Over Time (Total & Per Technology)"""
+    """
+    Get Cumulative Installed Capacity
+    ---
+    visualization_type: Line Chart
+    description: Shows cumulative installed capacity over time, both overall and by technology. Suitable for a multi-line chart.
+    responses:
+      200:
+        description: Cumulative installed capacity over time
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Year:
+                type: integer
+                example: 2024
+              Installed Capacity (MW):
+                type: number
+                example: 1200.0
+              Technology:
+                type: string
+                example: "Total"
+        examples:
+          application/json: [
+            { "Year": 2024, "Installed Capacity (MW)": 1200.0, "Technology": "Total" },
+            { "Year": 2024, "Installed Capacity (MW)": 800.0, "Technology": "Solar" }
+          ]
+    """
     df["Year"] = df["Permit Issuance Date"].dt.year
-
-    # ✅ Compute the total cumulative sum over time
     total_capacity = df.groupby("Year")["Installed Capacity (MW)"].sum().cumsum().reset_index()
-    total_capacity["Technology"] = "Total"  # Add label for total
-
-    # ✅ Compute cumulative installed capacity per technology
+    total_capacity["Technology"] = "Total"
     tech_capacity = df.groupby(["Year", "Technology"])["Installed Capacity (MW)"].sum().groupby(level=1).cumsum().reset_index()
-
-    # ✅ Combine total and per-technology cumulative capacity
     combined_capacity = pd.concat([total_capacity, tech_capacity], ignore_index=True)
-
     return jsonify(combined_capacity.to_dict(orient="records"))
 
 
 @app.route("/visualization/permit_type_distribution", methods=["GET"])
 def get_permit_type_distribution():
-    """Returns data for Permit Type Distribution Over Time"""
+    """
+    Get Permit Type Distribution Over Time
+    ---
+    visualization_type: Stacked Area Chart
+    description: Displays the distribution of permit types over time, segmented by technology. Best shown as a stacked area chart.
+    responses:
+      200:
+        description: Permit distribution by type over time
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Year:
+                type: integer
+                example: 2022
+              Technology:
+                type: string
+                example: "Wind"
+              Number of Permits:
+                type: integer
+                example: 40
+        examples:
+          application/json: [
+            { "Year": 2022, "Technology": "Wind", "Number of Permits": 40 },
+            { "Year": 2023, "Technology": "Solar", "Number of Permits": 35 }
+          ]
+    """
     df["Year"] = df["Application Submission Date"].dt.year
     permit_trends = df.groupby(["Year", "Technology"]).size().reset_index(name="Number of Permits")
     return jsonify(permit_trends.to_dict(orient="records"))
@@ -137,14 +351,49 @@ def get_permit_type_distribution():
 
 @app.route("/visualization/sankey_permits", methods=["GET"])
 def get_sankey_permits():
-    """Returns data for Sankey Diagram of Permits Flow"""
+    """
+    Get Sankey Diagram Data
+    ---
+    visualization_type: Sankey Diagram
+    description: Returns data structured for creating a Sankey diagram showing permit flow between regions and technologies.
+    responses:
+      200:
+        description: Sankey diagram data
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Region:
+                type: string
+              Technology:
+                type: string
+              Number of Permits:
+                type: integer
+    """
     permit_counts = df.groupby(["Region", "Technology"]).size().reset_index(name="Number of Permits")
     return jsonify(permit_counts.to_dict(orient="records"))
 
 
+
 @app.route("/visualization/processing_time", methods=["GET"])
 def get_processing_time():
-    """Returns data for Permit Processing Time Analysis"""
+    """
+    Get Permit Processing Time
+    ---
+    responses:
+      200:
+        description: Average permit processing time per year
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Year:
+                type: integer
+              Processing Time (Days):
+                type: number
+    """
     df["Processing Time (Days)"] = (df["Permit Issuance Date"] - df["Application Submission Date"]).dt.days
     df["Year"] = df["Application Submission Date"].dt.year
     processing_time_trends = df.groupby("Year")["Processing Time (Days)"].mean().reset_index()
@@ -153,89 +402,41 @@ def get_processing_time():
 
 @app.route("/visualization/violin_processing_time", methods=["GET"])
 def get_violin_processing_time():
-    """Returns data for Violin Plot of Permit Processing Time by Technology"""
-
-    global df  # Ensure we're using the global DataFrame
-
-    # ✅ Make a copy of df before modifying to avoid global modification issues
+    """
+    Get Violin Plot Data for Processing Time
+    ---
+    visualization_type: Violin Plot
+    description: Provides the distribution of permit processing times per technology. Ideal for a violin plot.
+    responses:
+      200:
+        description: Distribution of processing times by technology
+        schema:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: number
+        examples:
+          application/json: {
+            "Solar": [30, 45, 50, 60],
+            "Wind": [25, 40, 55, 70]
+          }
+    """
     df_filtered = df.copy()
-
-    # ✅ Compute processing time in days
-    df_filtered["Processing Time (Days)"] = (
-            df_filtered["Permit Issuance Date"] - df_filtered["Application Submission Date"]
-    ).dt.days
-
-    # ✅ Remove invalid (negative or missing) processing times
+    df_filtered["Processing Time (Days)"] = (df_filtered["Permit Issuance Date"] - df_filtered["Application Submission Date"]).dt.days
     df_filtered = df_filtered[df_filtered["Processing Time (Days)"] > 0]
-
-    # ✅ Convert to dictionary format (list of values per Technology)
     violin_data = df_filtered.groupby("Technology")["Processing Time (Days)"].apply(list).to_dict()
-
     return jsonify(violin_data)
 
 
 
-
-
-# ✅ VISUALIZATION ENDPOINTS (Map tab)
-
-@app.route("/geojson/regions", methods=["GET"])
-def get_regions_geojson():
-    """Returns the GeoJSON for Greece's administrative regions."""
-    geojson_path = "data/geo/greece-regions.geojson"
-    try:
-        with open(geojson_path, "r", encoding="utf-8") as f:
-            return jsonify(json.load(f))  # Serve as JSON response
-    except Exception as e:
-        return jsonify({"error": f"Could not load GeoJSON: {str(e)}"}), 500
-
-
-@app.route("/geojson/regional_units", methods=["GET"])
-def get_regional_units_geojson():
-    """Returns the GeoJSON for Greece's regional units (prefectures)."""
-    geojson_path = "data/geo/greece-prefectures.geojson"
-    try:
-        with open(geojson_path, "r", encoding="utf-8") as f:
-            return jsonify(json.load(f))  # Serve as JSON response
-    except Exception as e:
-        return jsonify({"error": f"Could not load GeoJSON: {str(e)}"}), 500
-
-
-@app.route("/map/permits", methods=["GET"])
-def get_map_permits():
-    """Returns JSON data for mapping permits (Regions & Regional Units)."""
-
-    global df
-
-    # Remove rows where LAT or LON is NaN for REGIONS (we are basically not mapping them in this case)
-    df_regions = df.dropna(subset=["LAT", "LON"])
-
-    # Remove rows where LAT_UNIT or LON_UNIT is NaN for REGIONAL UNITS (same here)
-    df_units = df.dropna(subset=["LAT_UNIT", "LON_UNIT"])
-
-    # Get Regions Data
-    regions_data = get_map_regions(df_regions)
-
-    # Get Regional Units Data
-    units_data = get_map_regional_units(df_units)
-
-    return jsonify({
-        "regions": regions_data,
-        "regional_units": units_data
-    })
-
-
-### **🔷 Separate Function for Regions**
 def get_map_regions(df_regions):
     """Processes and returns Region-level permit data."""
-
-    # Aggregate data by Region
     region_summary = df_regions.groupby("Region").agg({
         "Permit ID": "count",
         "Installed Capacity (MW)": "sum"
     }).reset_index()
 
-    # Get technology breakdown for each region
     region_tech_breakdown = df_regions.groupby(["Region", "Technology"])["Installed Capacity (MW)"].sum().reset_index()
 
     region_data = []
@@ -264,17 +465,13 @@ def get_map_regions(df_regions):
     return region_data
 
 
-### **🔷 Separate Function for Regional Units**
 def get_map_regional_units(df_units):
     """Processes and returns Regional Unit-level permit data."""
-
-    # Aggregate data by Regional Unit
     unit_summary = df_units.groupby("Regional Unit").agg({
         "Permit ID": "count",
         "Installed Capacity (MW)": "sum"
     }).reset_index()
 
-    # Get technology breakdown for each Regional Unit
     unit_tech_breakdown = df_units.groupby(["Regional Unit", "Technology"])["Installed Capacity (MW)"].sum().reset_index()
 
     unit_data = []
@@ -304,20 +501,58 @@ def get_map_regional_units(df_units):
 
 
 
+@app.route("/map/permits", methods=["GET"])
+def get_map_permits():
+    """
+    Get Permit Data for Mapping
+    ---
+    visualization_type: Map with Markers
+    description: Returns JSON data for mapping permits, including coordinates for both regions and regional units.
+    responses:
+      200:
+        description: JSON data for permits mapping
+        examples:
+          application/json: {
+            "regions": [
+              { "region": "Attica", "total_permits": 50, "total_capacity_mw": 500.0, "lat": 38.0, "lon": 23.7, "technology_breakdown": {"Solar": 300.0, "Wind": 200.0} }
+            ],
+            "regional_units": [
+              { "regional_unit": "Piraeus", "total_permits": 20, "total_capacity_mw": 200.0, "lat": 37.9, "lon": 23.6, "technology_breakdown": {"Solar": 150.0} }
+            ]
+          }
+    """
+    global df
+
+    df_regions = df.dropna(subset=["LAT", "LON"])
+    df_units = df.dropna(subset=["LAT_UNIT", "LON_UNIT"])
+
+    regions_data = get_map_regions(df_regions)
+    units_data = get_map_regional_units(df_units)
+
+    return jsonify({
+        "regions": regions_data,
+        "regional_units": units_data
+    })
+
+
 # ✅ VISUALIZATION ENDPOINTS (Data Table tab)
+
 @app.route("/data/table", methods=["GET"])
 def get_data_table():
-    """Returns the dataset for the Data Table tab, excluding unnecessary columns."""
-
-    # Define columns to drop
+    """
+    Get Full Permits Data Table
+    ---
+    visualization_type: Data Table
+    description: Returns the entire dataset for the permits, excluding unnecessary columns, suitable for rendering as a searchable/sortable table.
+    responses:
+      200:
+        description: Full permits data
+        examples:
+          application/json: [
+            { "Permit ID": "PERMIT12345", "Region": "Attica", "Technology": "Solar", "Installed Capacity (MW)": 300.5, "Application Submission Date": "2020-05-20" },
+            { "Permit ID": "PERMIT67890", "Region": "Crete", "Technology": "Wind", "Installed Capacity (MW)": 400.0, "Application Submission Date": "2021-06-15" }
+          ]
+    """
     columns_to_drop = ["Year", "LAT", "LON", "LAT_UNIT", "LON_UNIT", "Processing Time (Days)"]
-
-    # Ensure only existing columns are dropped
     df_display = df.drop(columns=[col for col in columns_to_drop if col in df.columns], errors="ignore")
-
-    # Convert to JSON and return
     return jsonify(df_display.to_dict(orient="records"))
-
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
