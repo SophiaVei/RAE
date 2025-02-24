@@ -30,6 +30,24 @@ def home():
     return jsonify({"message": "Renewable Energy Permits API"})
 
 
+@app.route("/geojson/regions", methods=["GET"])
+def get_regions_geojson():
+    geojson_path = os.path.join("data", "geo", "greece-regions.geojson")
+    try:
+        with open(geojson_path, "r", encoding="utf-8") as f:
+            return jsonify(json.load(f))
+    except Exception as e:
+        return jsonify({"error": f"Could not load GeoJSON: {str(e)}"}), 500
+
+@app.route("/geojson/regional_units", methods=["GET"])
+def get_regional_units_geojson():
+    geojson_path = os.path.join("data", "geo", "greece-prefectures.geojson")
+    try:
+        with open(geojson_path, "r", encoding="utf-8") as f:
+            return jsonify(json.load(f))
+    except Exception as e:
+        return jsonify({"error": f"Could not load GeoJSON: {str(e)}"}), 500
+
 
 ######################### THIS IS WHERE DATA FOR EACH VISUALIZATION STARTS #########################
 
