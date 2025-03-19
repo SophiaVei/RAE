@@ -1,4 +1,4 @@
-# Streamlit App: [RAE Insights] (https://rae-insights.streamlit.app/)
+# Streamlit App: [RAE Insights](https://rae-insights.streamlit.app/)
 
 # Build and Run the Docker Containers
 docker-compose up --build
