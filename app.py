@@ -261,8 +261,18 @@ with tab2:
 with tab3:
     st.subheader("🔍 Data Table")
 
-    # ✅ Drop the "Year" column if it exists
-    df_display = df.drop(columns=["Year", "LAT", "LON", "LAT_UNIT", "LON_UNIT", "Processing Time (Days)"], errors="ignore")
+    # ✅ Drop unnecessary columns
+    df_display = df.drop(
+        columns=[
+            "Year", "LAT", "LON", "LAT_UNIT", "LON_UNIT",
+            "Processing Time (Days)", "Regional Unit", "Regional Unit Greek",
+            "index_right", "distance_to_match"
+        ],
+        errors="ignore"
+    )
 
-    # ✅ Display the DataFrame without the "Year" column
+    # ✅ Rename "Regional Unit English" to "Regional Unit" for display
+    df_display = df_display.rename(columns={"Regional Unit English": "Regional Unit"})
+
+    # ✅ Display the DataFrame
     st.dataframe(df_display, use_container_width=True)

@@ -5,7 +5,7 @@ import pandas as pd
 import json
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from data_loader import load_data  # ✅ Load your existing data
+from data_loader import load_data
 
 from flask_cors import CORS # just in case...
 app = Flask(__name__)
@@ -571,6 +571,6 @@ def get_data_table():
             { "Permit ID": "PERMIT67890", "Region": "Crete", "Technology": "Wind", "Installed Capacity (MW)": 400.0, "Application Submission Date": "2021-06-15" }
           ]
     """
-    columns_to_drop = ["Year", "LAT", "LON", "LAT_UNIT", "LON_UNIT", "Processing Time (Days)"]
+    columns_to_drop = ["Year", "LAT", "LON", "LAT_UNIT", "LON_UNIT", "Processing Time (Days)", "Regional Unit Greek", "index_right", "distance_to_match"]
     df_display = df.drop(columns=[col for col in columns_to_drop if col in df.columns], errors="ignore")
     return jsonify(df_display.to_dict(orient="records"))

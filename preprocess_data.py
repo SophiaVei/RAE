@@ -2,6 +2,9 @@ import pandas as pd
 import os
 import numpy as np
 import unicodedata
+import geopandas as gpd
+import geopandas as gpd
+from shapely.geometry import Point
 
 # Define base directory
 base_dir = r"data\permits"
@@ -62,7 +65,8 @@ df_all = df_all.reset_index(drop=True)
 # Convert date columns to datetime (AFTER merging)
 date_columns = ["ΗΜΕΡΟΜΗΝΙΑ ΥΠΟΒΟΛΗΣ ΑΙΤΗΣΗΣ", "ΗΜΕΡΟΜΗΝΙΑ ΕΚΔ. ΑΔ.ΠΑΡΑΓΩΓΗΣ", "ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ ΑΔ.ΠΑΡΑΓΩΓΗΣ"]
 for col in date_columns:
-    df_all[col] = pd.to_datetime(df_all[col], errors="coerce", dayfirst=True)
+    df_all[col] = pd.to_datetime(df_all[col], format="%Y-%m-%d %H:%M:%S", errors="coerce")
+
 
 # Fix incorrect expiration years (e.g., 1935 -> 2035, 1945 -> 2045, 1946 -> 2046)
 df_all["ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ ΑΔ.ΠΑΡΑΓΩΓΗΣ"] = df_all["ΗΜΕΡΟΜΗΝΙΑ ΛΗΞΗΣ ΑΔ.ΠΑΡΑΓΩΓΗΣ"].apply(
@@ -344,6 +348,44 @@ df_all["Technology"] = df_all["Technology"].replace(technology_translation)
 final_output_file = os.path.join(base_dir, "final_permits_cleaned.xlsx")
 df_all.to_excel(final_output_file, index=False)
 
+
+
+
+
+# Load the permits data
+permits_df = df_all.copy()
+
+# Create geometry from LAT/LON_UNIT
+geometry = [Point(xy) for xy in zip(permits_df["LON_UNIT"], permits_df["LAT_UNIT"])]
+permits_gdf = gpd.GeoDataFrame(permits_df, geometry=geometry, crs="EPSG:4326")
+
+# Load the prefecture GeoJSON
+geojson_path = "data/geo/greece-prefectures.geojson"  # adjust if needed
+prefectures_gdf = gpd.read_file(geojson_path)
+
+# Sanity check: ensure both layers are in the same CRS
+permits_gdf = permits_gdf.to_crs("EPSG:4326")
+prefectures_gdf = prefectures_gdf.to_crs("EPSG:4326")
+
+# Perform spatial join: left = permits, right = prefectures
+joined = gpd.sjoin_nearest(
+    permits_gdf,
+    prefectures_gdf[["geometry", "name", "name_greek"]],
+    how="left",
+    distance_col="distance_to_match"
+)
+
+joined = joined.rename(columns={"name": "Regional Unit English", "name_greek": "Regional Unit Greek"})
+
+# Show unmatched cases
+unmatched = joined[joined["Regional Unit English"].isna()]
+print(f"⚠️ Unmatched permits after spatial join: {len(unmatched)}")
+
+# Save final result
+final_save_path = os.path.join(base_dir, "final_permits_cleaned.xlsx")
+joined.drop(columns="geometry").to_excel(final_save_path, index=False)
+print(f"✅ Cleaned and geospatially matched file saved to: {final_save_path}")
+
+
 print(f"Final number of unique permits: {len(df_all.index)}")
 print(f"Cleaned dataset saved to: {final_output_file}")
-

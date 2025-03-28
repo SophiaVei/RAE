@@ -123,12 +123,12 @@ def create_prefecture_map():
     permit_df_units = permit_df.dropna(subset=["LAT_UNIT", "LON_UNIT"])
 
     # Aggregate permit stats by Regional Unit
-    permit_summary_units = permit_df_units.groupby("Regional Unit").agg({
+    permit_summary_units = permit_df_units.groupby("Regional Unit English").agg({
         "Permit ID": "count",
         "Installed Capacity (MW)": "sum"
     }).reset_index()
 
-    permit_summary_units_dict = permit_summary_units.set_index("Regional Unit").to_dict(orient="index")
+    permit_summary_units_dict = permit_summary_units.set_index("Regional Unit English").to_dict(orient="index")
 
     # ✅ Create the Folium map for Prefectures
     prefecture_map = folium.Map(
@@ -157,9 +157,9 @@ def create_prefecture_map():
         total_capacity = stats["Installed Capacity (MW)"]
 
         # Get technology breakdown for this regional unit
-        tech_breakdown = get_technology_breakdown(permit_df_units, "Regional Unit", unit)
+        tech_breakdown = get_technology_breakdown(permit_df_units, "Regional Unit English", unit)
 
-        unit_data = permit_df_units[permit_df_units["Regional Unit"] == unit].iloc[0]
+        unit_data = permit_df_units[permit_df_units["Regional Unit English"] == unit].iloc[0]
         lat, lon = unit_data["LAT_UNIT"], unit_data["LON_UNIT"]
 
         # ✅ Add marker with permit count & hover info
